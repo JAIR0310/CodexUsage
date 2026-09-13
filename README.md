@@ -13,6 +13,7 @@ A lightweight native macOS utility that displays the remaining **5-hour** and **
 - Shows only the two Codex quota windows that matter here: 5-hour and 7-day.
 - Refreshes once per second while preserving the last valid value if a read temporarily fails.
 - Uses the Codex App Server bundled with the installed ChatGPT desktop app; it does **not** modify ChatGPT.app.
+- ChatGPT.app does **not** need to be running; Codex Usage launches its own separate Codex App Server child process from the installed bundle.
 - Native SwiftUI/AppKit interface with liquid-titanium glass styling and deterministic R19 edge optics.
 - Resizable native macOS window with no project-defined minimum window size.
 - User-level installation to `~/Applications/Codex Usage.app`; no administrator password is required.
