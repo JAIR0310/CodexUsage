@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift tests
+        run: swift test
+      - name: Release consistency
+        run: python3 Tools/check_release_consistency.py
+      - name: Layout validation
+        run: python3 Tools/validate_layout.py --tokens Design/VisualTokens.json
+      - name: Glass material validation
+        run: python3 Tools/validate_glass_material.py
+      - name: Edge optics validation
+        run: python3 Tools/validate_edge_optics.py
+      - name: Build app
+        run: ./build_macos.command

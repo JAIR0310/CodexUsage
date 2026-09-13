@@ -1,0 +1,2 @@
+0bc33ebcc48358133686a17ba4f40b2dbdc131ef71eb3f7dfeef33cd7f5a49fa  r19_proxy_candidate.png
+785ad5acb117b5f396de71445cde681e24d7dc7c5b5c514db60c3c0296c35d83  edge_optics_report.json

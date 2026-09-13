@@ -1,0 +1,208 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#000;overflow:hidden}
+*{box-sizing:border-box}
+#snapshot-root{position:relative;overflow:hidden;font-family:Inter,"Noto Sans CJK SC",system-ui,sans-serif;color:white}
+.panel{position:absolute;inset:0;overflow:hidden;isolation:isolate}
+.material{position:absolute;inset:0}
+.glow,.beam{position:absolute;pointer-events:none}
+.header{position:absolute;display:flex;align-items:center}
+.ring{position:relative;border-radius:50%;flex:none;overflow:visible;isolation:isolate}
+.ring:before{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:3;padding:var(--ring-stroke);background:var(--ring-gradient);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;filter:drop-shadow(0 0 calc(var(--ring-glow)*.22) rgba(255,255,255,.52)) drop-shadow(2px 2px calc(var(--ring-glow)*.78) rgba(255,183,92,var(--ring-warm-glow))) drop-shadow(-2px -2px calc(var(--ring-glow)*.48) rgba(150,201,255,var(--ring-cool-glow)))}
+.ring:after{content:"";position:absolute;border-radius:50%;inset:.55px;pointer-events:none;z-index:4;border:var(--ring-outer-width) solid rgba(255,255,255,var(--ring-outer-opacity));box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.ring-hole,.ring-outer-hi,.ring-inner-hi,.ring-spec-warm,.ring-spec-white{position:absolute;border-radius:50%;pointer-events:none}
+.ring-outer-hi{z-index:1;padding:calc(var(--ring-stroke) + 2px);background:var(--ring-gradient);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;filter:blur(calc(var(--ring-glow)*.48));opacity:.66}
+.title{white-space:nowrap}
+.card{position:absolute;overflow:visible;isolation:isolate}
+.card:before,.card:after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit}
+.card:before{padding:var(--border-w);background:var(--edge-map);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:var(--border-spec);mix-blend-mode:screen;z-index:3}
+.card:after{inset:-4px;padding:calc(var(--border-w)*4.0);border-radius:calc(27px + 4px);background:var(--edge-bloom-map);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;filter:blur(calc(var(--border-glow-blur)*.72));opacity:var(--border-glow-opacity);mix-blend-mode:screen;z-index:2}
+.label,.value,.reset{position:absolute;white-space:nowrap;z-index:3}
+.divider{position:absolute;width:1px}
+.edge{position:absolute;inset:0;pointer-events:none}
+svg.fx{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.r19-optics-field{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+</style></head><body>
+<div id="snapshot-root">
+  <div class="panel">
+    <div class="material"></div>
+    <svg class="fx" viewBox="0 0 720 408" preserveAspectRatio="none"><defs>
+      <linearGradient id="crestGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd090"/><stop offset=".38" stop-color="#ffffff"/><stop offset="1" stop-color="#8bcfff"/></linearGradient>
+      <linearGradient id="warmCool" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffbd69"/><stop offset=".46" stop-color="#fff"/><stop offset="1" stop-color="#79c3ff"/></linearGradient>
+      <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+      <filter id="blur14"><feGaussianBlur stdDeviation="14"/></filter>
+      <filter id="blur28"><feGaussianBlur stdDeviation="28"/></filter>
+    </defs>
+    <g id="backgroundCurves"></g>
+    <g id="crestGroup"></g>
+    </svg>
+    <div class="header"><div class="ring"></div><div class="title">Codex Usage</div></div>
+    <div class="card warm"><div class="label">5 小时</div><div class="value">100%</div><div class="reset">17:16 重置</div></div>
+    <div class="divider"></div>
+    <div class="card cool"><div class="label">7 天</div><div class="value">1%</div><div class="reset">9月15日 12:38 重置</div></div>
+    <div class="edge"></div>
+    <canvas class="r19-optics-field multiply"></canvas>
+    <canvas class="r19-optics-field screen"></canvas>
+  </div>
+</div>
+<script>
+const TOKENS = __VISUAL_TOKENS_JSON__;
+const T = __SNAPSHOT_TIME_SECONDS__;
+const C = TOKENS.__calibration || {};
+const root=document.querySelector('#snapshot-root');
+const DATA=TOKENS.data||{};
+root.style.width=TOKENS.canvas.width+'px'; root.style.height=TOKENS.canvas.height+'px';
+document.querySelector('.card.warm .reset').textContent=DATA.leftReset||'03:49 重置';
+document.querySelector('.card.cool .reset').textContent=DATA.rightReset||'9月15日 12:38 重置';
+const sx=TOKENS.canvas.width/720, sy=TOKENS.canvas.height/408, s=Math.min(sx,sy);
+const centerForeground=TOKENS.centerForeground!==false;
+const ox=(centerForeground?(TOKENS.canvas.width-720*s)/2:0)+(C.foreground_translate_x||0), oy=(centerForeground?(TOKENS.canvas.height-408*s)/2:0)+(C.foreground_translate_y||0);
+function px(v){return (v*s)+'px'}
+const panel=document.querySelector('.panel'); panel.style.borderRadius=px(TOKENS.panel.corner);
+const mat=document.querySelector('.material');
+mat.style.background=`
+linear-gradient(to bottom, rgba(255,255,255,${TOKENS.material.topEdgeGlow||0}) 0%, rgba(255,255,255,0) 15%),
+radial-gradient(34% 28% at 70% 3%, rgba(255,255,255,${TOKENS.material.topRightWhite||0}), transparent 72%),
+radial-gradient(54% 66% at 50% 48%, rgba(0,0,0,${TOKENS.material.centerDark||0}), transparent 72%),
+radial-gradient(34% 95% at -2% 52%, rgba(255,190,108,${TOKENS.material.leftEdgeGlow||0}), transparent 70%),
+radial-gradient(34% 95% at 102% 52%, rgba(105,194,255,${TOKENS.material.rightEdgeGlow||0}), transparent 70%),
+radial-gradient(52% 34% at 18% 101%, rgba(255,184,94,${TOKENS.material.bottomWarm||0}), transparent 70%),
+radial-gradient(54% 34% at 84% 101%, rgba(105,188,255,${TOKENS.material.bottomCool||0}), transparent 70%),
+radial-gradient(90% 32% at 50% 104%, rgba(255,255,255,${TOKENS.material.bottomWhite||0}), transparent 72%),
+radial-gradient(${TOKENS.material.warmSpread}% ${TOKENS.material.warmSpread*0.55}% at ${TOKENS.material.warmX}% ${TOKENS.material.warmY}%, rgba(255,188,105,${TOKENS.material.warmOpacity}), transparent 62%),
+radial-gradient(${TOKENS.material.coolSpread}% ${TOKENS.material.coolSpread*0.62}% at ${TOKENS.material.coolX}% ${TOKENS.material.coolY}%, rgba(111,190,255,${TOKENS.material.coolOpacity}), transparent 63%),
+radial-gradient(65% 55% at 52% 14%, rgba(255,255,255,${TOKENS.material.topWhite}), transparent 65%),
+linear-gradient(${TOKENS.material.angle}deg, ${TOKENS.material.c1} 0%, ${TOKENS.material.c2} 34%, ${TOKENS.material.c3} 67%, ${TOKENS.material.c4} 100%)`;
+mat.style.filter=`contrast(${TOKENS.material.contrast*(C.material_contrast_scale||1)}) brightness(${TOKENS.material.brightness*(C.material_brightness_scale||1)}) saturate(${TOKENS.material.saturation})`;
+
+const bg=document.querySelector('#backgroundCurves');
+(TOKENS.curves||[]).forEach(c=>{
+ const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',c.d); p.setAttribute('fill','none'); p.setAttribute('stroke',c.color); p.setAttribute('stroke-width',c.width); p.setAttribute('opacity',c.opacity*(C.curve_opacity_scale||1)); if(c.blur)p.setAttribute('filter',`url(#blur${c.blur})`); bg.appendChild(p);
+});
+const dynamicPhase=Math.sin((T/(TOKENS.animation?.liquidPeriod||64))*Math.PI*2);
+bg.setAttribute('transform',`translate(${(dynamicPhase*5).toFixed(2)} ${(dynamicPhase*2.5).toFixed(2)})`);
+const cg=document.querySelector('#crestGroup');
+cg.setAttribute('transform',`translate(${(dynamicPhase*4).toFixed(2)} ${(-dynamicPhase*2).toFixed(2)})`);
+(TOKENS.crest||[]).forEach(c=>{ const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',c.d); p.setAttribute('fill','none'); p.setAttribute('stroke',c.gradient?'url(#crestGrad)':c.color); p.setAttribute('stroke-width',c.width); p.setAttribute('opacity',c.opacity); if(c.blur)p.setAttribute('filter',`url(#blur${c.blur})`); cg.appendChild(p); });
+
+const h=document.querySelector('.header');h.style.left=(ox+TOKENS.header.x*s)+'px';h.style.top=(oy+TOKENS.header.y*s)+'px';h.style.gap=px(TOKENS.header.gap);
+const ring=document.querySelector('.ring');
+ring.style.width=ring.style.height=px(TOKENS.header.ringSize);
+ring.style.setProperty('--ring-stroke',px(TOKENS.header.ringStroke));
+ring.style.setProperty('--ring-glow',px(TOKENS.header.ringGlow));
+ring.style.setProperty('--ring-warm-glow',TOKENS.header.ringWarmGlowOpacity||.42);
+ring.style.setProperty('--ring-cool-glow',TOKENS.header.ringCoolGlowOpacity||.12);
+ring.style.setProperty('--ring-rim-glow',TOKENS.header.ringRimGlowOpacity||.56);
+ring.style.setProperty('--ring-outer-width',px(.9));
+ring.style.setProperty('--ring-outer-opacity',TOKENS.header.ringOuterHighlight||.82);
+ring.style.setProperty('--ring-gradient',`conic-gradient(from -122deg,
+  rgba(245,249,252,.88) 0%, rgba(255,255,255,.93) 18%, rgba(235,241,246,.84) 31%, rgba(255,225,181,.88) 43%, rgba(255,179,92,.98) 55%, rgba(205,198,187,.58) 66%, rgba(176,199,220,.78) 79%, rgba(255,255,255,.90) 100%)`);
+ring.style.background=`radial-gradient(circle at 34% 22%,rgba(255,255,255,.08),rgba(31,39,46,${(TOKENS.header.ringTintOpacity||.06)*.7}) 48%,rgba(6,10,14,${(TOKENS.header.ringTintOpacity||.06)}) 100%)`;
+ring.style.boxShadow=`0 0 ${px(5)} rgba(255,255,255,.20), ${px(3)} ${px(3)} ${px(10)} rgba(255,183,92,.44), ${px(-2)} ${px(-2)} ${px(7)} rgba(220,240,255,.18), 0 2px ${px(3)} rgba(0,0,0,.18), inset 0 0 ${px(5)} rgba(0,0,0,${TOKENS.header.ringDarkEdge||.14})`;
+ring.style.backdropFilter=`blur(${px(9)}) saturate(1.12)`;
+ring.style.webkitBackdropFilter=ring.style.backdropFilter;
+ring.innerHTML=`
+  <div class="ring-outer-hi"></div>
+  <div class="ring-inner-hi"></div>
+  <div class="ring-spec-warm"></div>
+  <div class="ring-spec-white"></div>`;
+const ohi=ring.querySelector('.ring-outer-hi');ohi.style.inset=px(-3.2);ohi.style.setProperty('--ring-stroke',px(TOKENS.header.ringStroke));ohi.style.setProperty('--ring-glow',px(TOKENS.header.ringGlow));ohi.style.setProperty('--ring-gradient',ring.style.getPropertyValue('--ring-gradient'));
+const ihi=ring.querySelector('.ring-inner-hi');ihi.style.inset=px(TOKENS.header.ringStroke+1.5);ihi.style.border=`${px(.75)} solid rgba(255,255,255,${TOKENS.header.ringInnerHighlight||.38})`;ihi.style.boxShadow=`0 0 0 ${px(.8)} rgba(0,0,0,${TOKENS.header.ringDarkEdge||.22})`;
+const rw=ring.querySelector('.ring-spec-warm');rw.style.inset=px(-.1);rw.style.border=`${px(TOKENS.header.ringSpecularWidth||1.35)} solid transparent`;rw.style.borderRightColor=`rgba(255,190,102,${TOKENS.header.ringSpecularOpacity||.95})`;rw.style.borderBottomColor=`rgba(255,190,102,${(TOKENS.header.ringSpecularOpacity||.95)*.48})`;rw.style.transform='rotate(-12deg)';rw.style.filter=`drop-shadow(2px 2px ${px(3)} rgba(255,183,92,.65))`;rw.style.zIndex='4';
+const rwh=ring.querySelector('.ring-spec-white');rwh.style.inset=px(.2);rwh.style.border=`${px(TOKENS.header.ringSpecularWidth||1.35)} solid transparent`;rwh.style.borderTopColor=`rgba(255,255,255,${TOKENS.header.ringSpecularOpacity||.95})`;rwh.style.borderLeftColor=`rgba(255,255,255,${(TOKENS.header.ringSpecularOpacity||.95)*.55})`;rwh.style.transform='rotate(4deg)';rwh.style.zIndex='4';
+const title=document.querySelector('.title');title.style.fontSize=px(TOKENS.header.titleSize*(C.font_size_scale||1));title.style.fontWeight=TOKENS.header.titleWeight;title.style.letterSpacing=px(TOKENS.header.tracking);title.style.lineHeight='1';title.style.color='#e8eaec';title.style.textShadow=`0 -1px ${px(TOKENS.header.titleGlow)} rgba(255,255,255,${TOKENS.header.titleGlowOpacity}),0 2px 2px rgba(0,0,0,.55)`;
+
+function applyCard(el,t){const side=el.classList.contains('warm')?'left':'right'; const cb=(C[side+'_card_brightness_scale']||1); el.style.setProperty('--accent',t.accentRgb);el.style.setProperty('--border',t.borderRgb);el.style.setProperty('--border-w',px(t.borderWidth));el.style.setProperty('--border-spec',t.borderSpecularOpacity);el.style.setProperty('--border-glow-opacity',t.borderGlowOpacity);el.style.setProperty('--border-glow-blur',px(t.borderGlowBlur));
+ const warmEdge=`radial-gradient(70% 58% at 0% 5%,rgba(255,255,255,.96),rgba(255,225,184,.56) 30%,transparent 72%),radial-gradient(64% 54% at 0% 100%,rgba(255,194,102,.92),rgba(255,220,170,.36) 34%,transparent 70%),radial-gradient(58% 50% at 100% 100%,rgba(255,244,224,.86),rgba(255,195,108,.32) 34%,transparent 70%),linear-gradient(135deg,rgba(255,255,255,.48),rgba(255,255,255,.26))`;
+ const coolEdge=`radial-gradient(66% 56% at 100% 4%,rgba(247,252,255,.98),rgba(126,204,255,.72) 34%,transparent 70%),radial-gradient(68% 58% at 100% 100%,rgba(183,231,255,.94),rgba(92,184,255,.58) 34%,transparent 70%),radial-gradient(52% 46% at 0% 0%,rgba(255,255,255,.66),transparent 72%),linear-gradient(135deg,rgba(255,255,255,.46),rgba(220,241,255,.24))`;
+ const warmBloom=`radial-gradient(66% 54% at 0% 7%,rgba(255,211,151,.78),transparent 66%),radial-gradient(66% 56% at 0% 100%,rgba(255,181,82,.88),transparent 64%),radial-gradient(58% 50% at 100% 100%,rgba(255,226,181,.72),transparent 66%)`;
+ const coolBloom=`radial-gradient(64% 52% at 100% 7%,rgba(140,211,255,.84),transparent 64%),radial-gradient(66% 56% at 100% 100%,rgba(88,186,255,.90),transparent 64%)`;
+ el.style.setProperty('--edge-map',side==='left'?warmEdge:coolEdge); el.style.setProperty('--edge-bloom-map',side==='left'?warmBloom:coolBloom); el.style.filter=`brightness(${cb})`;el.style.left=(ox+t.x*s)+'px';el.style.top=(oy+t.y*s)+'px';el.style.width=px(t.w);el.style.height=px(t.h);el.style.borderRadius=px(t.radius);el.style.background=`radial-gradient(90% 78% at 12% 12%,rgba(255,255,255,${t.topSheen}),transparent 48%),radial-gradient(75% 80% at 88% 88%,rgba(${t.accentRgb},${t.accentInner}),transparent 57%),linear-gradient(145deg,rgba(232,238,244,${t.glassMaterialOpacity*.20}),rgba(196,207,219,${t.glassMaterialOpacity*.08})),linear-gradient(145deg,${t.c1},${t.c2} 57%,${t.c3}),rgba(0,0,0,${t.glassTintOpacity})`;el.style.backdropFilter=`blur(${px(t.backdropBlur)}) saturate(1.14)`;el.style.webkitBackdropFilter=el.style.backdropFilter;el.style.boxShadow=`0 ${px(t.shadowY)} ${px(t.shadowBlur)} rgba(0,0,0,${t.shadowOpacity}), 0 0 ${px(t.outerGlow)} rgba(${t.accentRgb},${t.outerGlowOpacity}), inset 0 0 ${px(t.innerBlur)} rgba(255,255,255,${t.innerWhite}), inset 0 0 0 ${px(.7)} rgba(255,255,255,${t.innerRimOpacity})`;
+ const label=el.querySelector('.label');label.style.left=px(t.padX);label.style.top=px(t.labelY);label.style.fontSize=px(t.labelSize*(C.font_size_scale||1));label.style.fontWeight=t.labelWeight;label.style.color=`rgba(255,255,255,${t.labelOpacity})`;label.style.textShadow='0 1px 2px rgba(0,0,0,.55)';
+ const value=el.querySelector('.value');value.style.left=px(t.padX);value.style.top=px(t.valueY);value.style.fontSize=px(t.valueSize*(C.font_size_scale||1));value.style.fontWeight=t.valueWeight;value.style.lineHeight='1';value.style.color=t.valueColor;value.style.textShadow=`0 0 ${px(t.valueGlow)} rgba(${t.accentRgb},${t.valueGlowOpacity}),0 -1px ${px(2)} rgba(255,255,255,.14),0 2px 3px rgba(0,0,0,.48)`;
+ const reset=el.querySelector('.reset');reset.style.left=px(t.padX);reset.style.bottom=px(t.resetBottom);reset.style.fontSize=px(t.resetSize*(C.font_size_scale||1));reset.style.fontWeight=t.resetWeight;reset.style.color=`rgba(255,255,255,${t.resetOpacity})`;reset.style.lineHeight='1';
+}
+applyCard(document.querySelector('.card.warm'),TOKENS.cards.left);applyCard(document.querySelector('.card.cool'),TOKENS.cards.right);
+
+function decodeInt16LE(b64){
+  const raw=atob(b64); const out=new Int16Array(raw.length/2);
+  for(let i=0,j=0;i<raw.length;i+=2,j++){
+    let v=raw.charCodeAt(i)|(raw.charCodeAt(i+1)<<8); if(v&0x8000)v-=0x10000; out[j]=v;
+  }
+  return out;
+}
+function reconstructChannel(spec,w,h,rank){
+  const Lq=decodeInt16LE(spec.leftB64),Rq=decodeInt16LE(spec.rightB64);
+  const Ls=spec.leftScale,Rs=spec.rightScale; const out=new Float32Array(w*h);
+  for(let y=0;y<h;y++){
+    const ly=y*rank;
+    for(let x=0;x<w;x++){
+      let v=0;
+      for(let k=0;k<rank;k++)v+=(Lq[ly+k]*Ls)*(Rq[k*w+x]*Rs);
+      out[y*w+x]=Math.max(0,Math.min(1,v));
+    }
+  }
+  return out;
+}
+function renderR19OpticalField(){
+  const field=TOKENS.r19OpticalField; if(!field)return;
+  const mc=document.querySelector('.r19-optics-field.multiply');
+  const sc=document.querySelector('.r19-optics-field.screen');
+  const W=TOKENS.canvas.width,H=TOKENS.canvas.height;
+  for(const c of [mc,sc]){c.width=W;c.height=H;c.style.width=W+'px';c.style.height=H+'px';}
+  mc.style.mixBlendMode='multiply';sc.style.mixBlendMode='screen';
+  const mctx=mc.getContext('2d',{willReadFrequently:false}),sctx=sc.getContext('2d',{willReadFrequently:false});
+  mctx.fillStyle='rgb(255,255,255)';mctx.fillRect(0,0,W,H);
+  sctx.fillStyle='rgb(0,0,0)';sctx.fillRect(0,0,W,H);
+  for(const f of Object.values(field.fields)){
+    const rank=f.rank,w=f.w,h=f.h;
+    const ma=f.channels.multiplyAttenuation.map(ch=>reconstructChannel(ch,w,h,rank));
+    const ss=f.channels.screen.map(ch=>reconstructChannel(ch,w,h,rank));
+    const mi=mctx.createImageData(w,h),si=sctx.createImageData(w,h);
+    function smoothstep01(t){t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);}
+    function roundedRectSD(gx,gy,q){
+      const cx=(q.x1+q.x2)/2,cy=(q.y1+q.y2)/2,hx=(q.x2-q.x1)/2,hy=(q.y2-q.y1)/2;
+      const qx=Math.abs(gx-cx)-(hx-q.radius),qy=Math.abs(gy-cy)-(hy-q.radius);
+      return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-q.radius;
+    }
+    function focusSupport(gx,gy,rect,sigma){
+      const dx=Math.max(rect[0]-gx,0,gx-(rect[2]-1));
+      const dy=Math.max(rect[1]-gy,0,gy-(rect[3]-1));
+      const d=Math.hypot(dx,dy);return Math.exp(-0.5*(d/sigma)*(d/sigma));
+    }
+    function opticalSupport(fieldName,gx,gy){
+      const sp=field.support||{};
+      if(fieldName==='ring'){
+        const q=sp.ring||{cx:98,cy:92,radius:62,feather:8};
+        const d=Math.hypot(gx-q.cx,gy-q.cy);
+        if(q.outerStrength!==undefined){
+          const inner=q.innerRadius??28, trans=q.transition??3, outer=q.outerRadius??48, feather=q.feather??7;
+          if(d<=inner)return 1;
+          if(d<inner+trans){const t=smoothstep01((d-inner)/trans);return 1+(q.outerStrength-1)*t;}
+          if(d<=outer)return q.outerStrength;
+          return q.outerStrength*(1-smoothstep01((d-outer)/feather));
+        }
+        return (q.strength??1)*smoothstep01((q.radius+q.feather-d)/q.feather);
+      }
+      const q=sp[fieldName]; if(!q || q.type==='full')return 1;
+      const sd=roundedRectSD(gx,gy,q);
+      let a=Math.exp(-0.5*(sd/sp.cardBandSigma)*(sd/sp.cardBandSigma));
+      if(fieldName==='left' && q.ringNotchInner!==undefined){
+        const rq=sp.ring||{cx:98,cy:92};const d=Math.hypot(gx-rq.cx,gy-rq.cy);
+        a*=smoothstep01((d-q.ringNotchInner)/q.ringNotchWidth);
+      }
+      return Math.max(a,focusSupport(gx,gy,q.focus,q.focusSigma));
+    }
+    const fieldName=Object.entries(field.fields).find(([,value])=>value===f)?.[0]||'';
+    for(let i=0;i<w*h;i++){
+      const p=i*4, lx=i%w, ly=Math.floor(i/w), a=opticalSupport(fieldName,f.x+lx,f.y+ly);
+      mi.data[p]=Math.round(255*((1-a)+a*(1-ma[0][i])));mi.data[p+1]=Math.round(255*((1-a)+a*(1-ma[1][i])));mi.data[p+2]=Math.round(255*((1-a)+a*(1-ma[2][i])));mi.data[p+3]=255;
+      si.data[p]=Math.round(255*(a*ss[0][i]));si.data[p+1]=Math.round(255*(a*ss[1][i]));si.data[p+2]=Math.round(255*(a*ss[2][i]));si.data[p+3]=255;
+    }
+    mctx.putImageData(mi,f.x,f.y);sctx.putImageData(si,f.x,f.y);
+  }
+}
+renderR19OpticalField();
+const d=document.querySelector('.divider');d.style.left=(ox+TOKENS.divider.x*s)+'px';d.style.top=(oy+TOKENS.divider.y*s)+'px';d.style.height=px(TOKENS.divider.h);d.style.background=`linear-gradient(transparent,rgba(255,255,255,${TOKENS.divider.opacity}),rgba(255,255,255,${TOKENS.divider.opacity*.45}),transparent)`;
+const e=document.querySelector('.edge');e.style.borderRadius=px(TOKENS.panel.corner);e.style.boxShadow=`inset 0 0 0 ${px(TOKENS.edge.line)} rgba(255,255,255,${TOKENS.edge.whiteOpacity}),inset ${px(TOKENS.edge.warmInset)} 0 ${px(TOKENS.edge.blur)} rgba(255,181,86,${TOKENS.edge.warmOpacity}),inset ${px(-TOKENS.edge.coolInset)} 0 ${px(TOKENS.edge.blur)} rgba(91,183,255,${TOKENS.edge.coolOpacity})`;e.style.filter=`drop-shadow(0 0 ${px(TOKENS.edge.outerBlur)} rgba(255,255,255,${TOKENS.edge.outerOpacity}))`;
+</script></body></html>

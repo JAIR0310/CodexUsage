@@ -1,0 +1,30 @@
+# Swift / Xcode
+.build/
+build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editors / macOS
+.DS_Store
+.vscode/
+.idea/
+
+# Local credentials / configuration
+.env
+.env.*
+!.env.example
+
+# Local delivery artifacts
+*.zip
+*.part
+*.app

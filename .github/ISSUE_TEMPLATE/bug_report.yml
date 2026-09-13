@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a reproducible problem in Codex Usage
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a problem.
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: e.g. 26.0
+    validations:
+      required: true
+  - type: input
+    id: architecture
+    attributes:
+      label: Mac architecture
+      placeholder: Apple Silicon / Intel
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
