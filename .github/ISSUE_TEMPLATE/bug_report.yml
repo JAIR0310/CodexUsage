@@ -5,7 +5,14 @@ labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: Thanks for taking the time to report a problem.
+      value: Thanks for taking the time to report a problem. Do not include passwords, API keys, session tokens, cookies, or other credentials.
+  - type: input
+    id: app_version
+    attributes:
+      label: Codex Usage version / build
+      placeholder: e.g. 1.12.0 (Build 19)
+    validations:
+      required: true
   - type: input
     id: macos
     attributes:
@@ -18,6 +25,14 @@ body:
     attributes:
       label: Mac architecture
       placeholder: Apple Silicon / Intel
+    validations:
+      required: true
+  - type: input
+    id: chatgpt_codex_version
+    attributes:
+      label: ChatGPT / bundled Codex version
+      description: Include the ChatGPT app version and, if known, the bundled Codex version.
+      placeholder: e.g. ChatGPT x.y.z / Codex x.y.z
     validations:
       required: true
   - type: textarea
@@ -38,3 +53,10 @@ body:
       label: Actual behavior
     validations:
       required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Error message / diagnostics
+      description: Paste only non-sensitive diagnostics. Remove any credentials, tokens, cookies, account identifiers, and private local data first.
+    validations:
+      required: false
