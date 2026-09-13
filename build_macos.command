@@ -27,12 +27,14 @@ rm -rf "$BUILD"
 mkdir -p "$MACOS" "$MODULES"
 
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
-ARCH="$(uname -m)"
+HOST_ARCH="$(uname -m)"
+ARCH="${CODEX_USAGE_ARCH:-$HOST_ARCH}"
 case "$ARCH" in
   arm64|x86_64) ;;
   *) fail "不支持的 Mac 架构：$ARCH" ;;
 esac
 TARGET="${ARCH}-apple-macosx14.0"
+printf '目标架构：%s（当前主机：%s）\n' "$ARCH" "$HOST_ARCH"
 
 printf '%s\n' '1/5 编译核心模块为静态对象...'
 xcrun --sdk macosx swiftc \
@@ -68,8 +70,8 @@ xcrun --sdk macosx swiftc \
   -O \
   -swift-version 6 \
   -parse-as-library \
-  -sdk "$SDK" \
   -target "$TARGET" \
+  -sdk "$SDK" \
   -I "$MODULES" \
   "$ROOT/Sources/CodexUsage/CodexUsageApp.swift" \
   "$ROOT/Sources/CodexUsage/CodexExecutableLocator.swift" \
