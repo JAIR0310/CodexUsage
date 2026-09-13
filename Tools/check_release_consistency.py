@@ -120,7 +120,7 @@ if report_path.exists():
 # Public tree should not contain internal history or personal identifiers.
 if (root / "History").exists():
     errors.append("internal History directory must not be present in the public tree")
-ignored_scan_roots = {".git", ".build", ".swiftpm"}
+ignored_scan_roots = {".git", ".build", ".swiftpm", "build", "DerivedData"}
 for path in root.rglob("*"):
     relative = path.relative_to(root)
     if any(part in ignored_scan_roots for part in relative.parts):
