@@ -5,7 +5,7 @@ Recommended initial repository settings:
 - Repository name: `CodexUsage`
 - Visibility: Public
 - Default branch: `main`
-- Description: `Native macOS utility for displaying Codex 5-hour and 7-day usage limits.`
+- Description: `A standalone macOS app—independent of ChatGPT—that displays your current Codex quota and updates it in real time.`
 - Suggested topics: `macos`, `swift`, `swiftui`, `codex`, `usage-monitor`, `appkit`
 - Do not initialize the remote with another README, LICENSE, or .gitignore; this source tree already contains them.
 
