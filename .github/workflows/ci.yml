@@ -23,3 +23,5 @@ jobs:
         run: CODEX_USAGE_ARCH=arm64 ./build_macos.command
       - name: Build app (Intel)
         run: CODEX_USAGE_ARCH=x86_64 ./build_macos.command
+      - name: Release consistency (after build artifacts)
+        run: python3 Tools/check_release_consistency.py
