@@ -11,6 +11,7 @@
 - 只显示 5 小时、7 天两组 Codex 额度及重置时间。
 - 每 1 秒刷新一次；单次读取失败时保留最近一次有效值。
 - 复用 ChatGPT 桌面 App 内置的 Codex App Server，不修改 `/Applications/ChatGPT.app`。
+- **ChatGPT.app 无需保持运行**；Codex Usage 会从已安装的应用包中自行启动独立的 Codex App Server 子进程。
 - 原生 SwiftUI/AppKit 界面，使用液态钛金属、透明玻璃与 R19 边缘光学效果。
 - 保留 macOS 原生拖动与缩放，并取消工程人为设置的最小窗口尺寸限制。
 - 安装到当前用户的 `~/Applications/Codex Usage.app`，不需要管理员密码。
