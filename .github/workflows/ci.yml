@@ -19,5 +19,7 @@ jobs:
         run: python3 Tools/validate_glass_material.py
       - name: Edge optics validation
         run: python3 Tools/validate_edge_optics.py
-      - name: Build app
-        run: ./build_macos.command
+      - name: Build app (Apple Silicon)
+        run: CODEX_USAGE_ARCH=arm64 ./build_macos.command
+      - name: Build app (Intel)
+        run: CODEX_USAGE_ARCH=x86_64 ./build_macos.command
