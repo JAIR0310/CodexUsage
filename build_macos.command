@@ -6,6 +6,7 @@ BUILD="$ROOT/build"
 APP="$BUILD/Codex Usage.app"
 CONTENTS="$APP/Contents"
 MACOS="$CONTENTS/MacOS"
+RESOURCES="$CONTENTS/Resources"
 MODULES="$BUILD/modules"
 
 fail() {
@@ -24,7 +25,7 @@ xcrun --sdk macosx --find swiftc >/dev/null 2>&1 || fail '未找到 macOS Swift 
 plutil -lint "$ROOT/Packaging/Info.plist" >/dev/null || fail 'Info.plist 校验失败。'
 
 rm -rf "$BUILD"
-mkdir -p "$MACOS" "$MODULES"
+mkdir -p "$MACOS" "$MODULES" "$RESOURCES"
 
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
 HOST_ARCH="$(uname -m)"
@@ -86,6 +87,7 @@ xcrun --sdk macosx swiftc \
   -o "$MACOS/CodexUsage"
 
 cp "$ROOT/Packaging/Info.plist" "$CONTENTS/Info.plist"
+cp "$ROOT/Resources/AppIcon.icns" "$RESOURCES/AppIcon.icns"
 chmod +x "$MACOS/CodexUsage"
 
 printf '%s\n' '4/5 临时本机签名...'
@@ -98,11 +100,14 @@ plutil -lint "$CONTENTS/Info.plist" >/dev/null
   || fail 'CFBundleExecutable 与主程序不一致。'
 [ "$(plutil -extract CFBundleIdentifier raw "$CONTENTS/Info.plist")" = 'app.codexusage.CodexUsage' ] \
   || fail 'CFBundleIdentifier 不符合工程冻结值。'
+[ "$(plutil -extract CFBundleIconFile raw "$CONTENTS/Info.plist")" = 'AppIcon' ] \
+  || fail 'CFBundleIconFile 不是 AppIcon。'
 [ "$(plutil -extract CFBundleVersion raw "$CONTENTS/Info.plist")" = '19' ] \
   || fail 'CFBundleVersion 不是 R19 冻结值 19。'
 [ "$(plutil -extract CFBundleShortVersionString raw "$CONTENTS/Info.plist")" = '1.12.0' ] \
   || fail 'CFBundleShortVersionString 不是 R19 冻结值 1.12.0。'
 [ -x "$MACOS/CodexUsage" ] || fail 'App 主程序不可执行。'
+[ -f "$RESOURCES/AppIcon.icns" ] || fail 'AppIcon.icns 未进入 App Bundle。'
 
 if find "$MACOS" -maxdepth 1 -type f ! -name 'CodexUsage' -print -quit | grep -q .; then
   fail 'Contents/MacOS 中出现了非预期运行库。'

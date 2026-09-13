@@ -20,6 +20,7 @@ if info_path.exists():
     info = plistlib.loads(info_path.read_bytes())
     expected = {
         "CFBundleIdentifier": "app.codexusage.CodexUsage",
+        "CFBundleIconFile": "AppIcon",
         "CFBundleVersion": "19",
         "CFBundleShortVersionString": "1.12.0",
         "LSMinimumSystemVersion": "14.0",
@@ -39,6 +40,7 @@ for required in [
     "Package.swift",
     "build_macos.command",
     "install_macos.command",
+    "Resources/AppIcon.icns",
     "Design/VisualTokens.json",
     "Design/R19OpticalField.json",
     "Design/VisualValidation/proxy_template.html",
@@ -82,6 +84,16 @@ if "R19OpticalFieldOverlay" not in swift or "R19OpticalFieldOverlay" not in fiel
     errors.append("R19 optical-field overlay is not integrated")
 if "R18GlassCardOptics(style: style, accent: accent)" in swift:
     errors.append("legacy per-card optics overlay is still active")
+
+for legacy_marker in [
+    "R18TitaniumRing",
+    "R18GlassCardOptics",
+    "private struct GlassCardEdge: View",
+]:
+    if legacy_marker in swift:
+        errors.append(f"legacy visual dead code still present: {legacy_marker}")
+if swift.count("private struct TitaniumRing: View") != 1:
+    errors.append("expected exactly one active TitaniumRing implementation")
 if "vDSP_mmul" not in field_swift or "multiplyAttenuation" not in field_swift:
     errors.append("generated R19 optical-field implementation is incomplete")
 
@@ -99,6 +111,8 @@ for label, text in [("build_macos.command", build), ("install_macos.command", in
 
 if "R19OpticalField.generated.swift" not in build:
     errors.append("build_macos.command does not compile R19 optical field")
+if "Resources/AppIcon.icns" not in build:
+    errors.append("build_macos.command does not bundle AppIcon.icns")
 if "sudo" in install:
     errors.append("install_macos.command must not require sudo/admin password")
 if "$HOME/Applications" not in install:

@@ -97,6 +97,7 @@ Design/R19OpticalField.json   Frozen R19 optical field parameters
 Design/VisualValidation/      Current proxy/final validation evidence only
 Tools/                        Generators and current validation scripts
 Packaging/Info.plist          macOS application metadata
+Resources/AppIcon.icns           macOS application icon
 build_macos.command           Local build + ad-hoc signing
 install_macos.command         User-level overwrite installer
 ```
