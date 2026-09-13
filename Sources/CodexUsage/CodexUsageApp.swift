@@ -16,6 +16,21 @@ struct CodexUsageApp: App {
   var body: some Scene {
     WindowGroup {
       TitaniumContentView(model: model)
+        .alert(
+          "Codex Usage",
+          isPresented: Binding(
+            get: { model.errorMessage != nil },
+            set: { isPresented in
+              if !isPresented {
+                model.dismissError()
+              }
+            }
+          )
+        ) {
+          Button("好", role: .cancel) {}
+        } message: {
+          Text(model.errorMessage ?? "")
+        }
     }
     .defaultSize(width: 720, height: 410)
     .windowResizability(.automatic)
